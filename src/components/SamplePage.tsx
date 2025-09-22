@@ -1,5 +1,6 @@
 import { useState } from 'react';  
 import { Button } from './ui/button';
+import SnakeGame from './SnakeGame';
 
 declare global {
   interface Window {
@@ -15,6 +16,7 @@ function SamplePage() {
     const [lastEvent, setLastEvent] = useState<string>('No events yet');
     const [showVideo, setShowVideo] = useState(false);
     const [cookieMessage, setCookieMessage] = useState('No cookie set');
+    const [showSnakeGame, setShowSnakeGame] = useState(false);
 
     const callUnity = async (eventType: string, data?: any) => {
         setIsLoading(eventType);
@@ -41,6 +43,27 @@ function SamplePage() {
     const setCookie = () => {
         document.cookie = "testCookie=HelloWorld; path=/; max-age=3600";
         setCookieMessage('Cookie set: testCookie=HelloWorld');
+    };
+
+    const getCookie = (name: string) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop()?.split(';').shift();
+        return null;
+    };
+
+    const deleteCookie = (name: string) => {
+        document.cookie = `${name}=; path=/; max-age=-1`;
+        setCookieMessage(`Cookie deleted: ${name}`);
+    };
+
+    const handleGetCookie = () => {
+        const value = getCookie('testCookie');
+        setCookieMessage(value ? `Cookie value: ${value}` : 'Cookie not found');
+    };
+
+    const handleDeleteCookie = () => {
+        deleteCookie('testCookie');
     };
 
     return (
@@ -103,6 +126,13 @@ function SamplePage() {
                         >
                             🎥 Toggle YouTube Video
                         </Button>
+
+                        <Button
+                            onClick={() => setShowSnakeGame(!showSnakeGame)}
+                            variant="default"
+                        >
+                            🐍 Toggle Snake Game
+                        </Button>
                     </div>
                 </div>
 
@@ -122,12 +152,22 @@ function SamplePage() {
                     </div>
                 )}
 
+                {showSnakeGame && <SnakeGame />}
+
                 <div className="mb-6 sm:mb-8">
                     <h2 className="text-2xl sm:text-xl font-semibold text-gray-800 mb-4">Cookie Test</h2>
                     <p className="text-gray-600 text-lg sm:text-base mb-4">{cookieMessage}</p>
-                    <Button onClick={setCookie} variant="default">
-                        🍪 Set Cookie
-                    </Button>
+                    <div className="space-y-3">
+                        <Button onClick={setCookie} variant="default">
+                            🍪 Set Cookie
+                        </Button>
+                        <Button onClick={handleGetCookie} variant="outline">
+                            📖 Get Cookie
+                        </Button>
+                        <Button onClick={handleDeleteCookie} variant="destructive">
+                            🗑️ Delete Cookie
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="text-center text-gray-500 text-sm">

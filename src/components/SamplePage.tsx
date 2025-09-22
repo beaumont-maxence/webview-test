@@ -1,6 +1,7 @@
 import { useState } from 'react';  
 import { Button } from './ui/button';
 import SnakeGame from './SnakeGame';
+import RPGGame from './RPGGame';
 
 declare global {
   interface Window {
@@ -17,6 +18,7 @@ function SamplePage() {
     const [showVideo, setShowVideo] = useState(false);
     const [cookieMessage, setCookieMessage] = useState('No cookie set');
     const [showSnakeGame, setShowSnakeGame] = useState(false);
+    const [showRPGGame, setShowRPGGame] = useState(false);
 
     const callUnity = async (eventType: string, data?: any) => {
         setIsLoading(eventType);
@@ -133,6 +135,13 @@ function SamplePage() {
                         >
                             🐍 Toggle Snake Game
                         </Button>
+
+                        <Button
+                            onClick={() => setShowRPGGame(!showRPGGame)}
+                            variant="default"
+                        >
+                            ⚔️ Toggle RPG Game
+                        </Button>
                     </div>
                 </div>
 
@@ -153,6 +162,8 @@ function SamplePage() {
                 )}
 
                 {showSnakeGame && <SnakeGame />}
+
+                {showRPGGame && <RPGGame />}
 
                 <div className="mb-6 sm:mb-8">
                     <h2 className="text-2xl sm:text-xl font-semibold text-gray-800 mb-4">Cookie Test</h2>

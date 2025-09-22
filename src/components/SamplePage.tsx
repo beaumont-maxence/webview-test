@@ -1,4 +1,4 @@
-import { useState } from 'react';  
+import { useState, useEffect } from 'react';  
 import { Button } from './ui/button';
 import SnakeGame from './SnakeGame';
 import RPGGame from './RPGGame';
@@ -19,6 +19,13 @@ function SamplePage() {
     const [cookieMessage, setCookieMessage] = useState('No cookie set');
     const [showSnakeGame, setShowSnakeGame] = useState(false);
     const [showRPGGame, setShowRPGGame] = useState(false);
+
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        setShowVideo(urlParams.get('video') === 'true');
+        setShowSnakeGame(urlParams.get('snake') === 'true');
+        setShowRPGGame(urlParams.get('rpg') === 'true');
+    }, []);
 
     const callUnity = async (eventType: string, data?: any) => {
         setIsLoading(eventType);

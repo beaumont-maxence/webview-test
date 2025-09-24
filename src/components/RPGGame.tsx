@@ -180,7 +180,7 @@ const RPGGame: React.FC = () => {
       if (tile === 'enemy') {
         setGameState('combat');
         setEnemyPos({ x: newX, y: newY });
-        setEnemy({ name: 'Goblin', hp: 50, maxHp: 50, attack: 15, gold: 10, level: 1, xp: 0 });
+        setEnemy({ name: 'Goblin', hp: 50, maxHp: 50, attack: 15, gold: 20, level: 1, xp: 0 });
         setMessage('You encountered a Goblin! Combat begins!');
       } else if (tile === 'shop') {
         setGameState('shop');
@@ -209,6 +209,7 @@ const RPGGame: React.FC = () => {
           const leveledPlayer = levelUp(updatedPlayer);
           if (leveledPlayer.level > currentPlayer.level) {
             setMessage(`You defeated the ${currentEnemy.name}! Gained ${currentEnemy.gold} gold and 20 XP. Leveled up to ${leveledPlayer.level}!`);
+            window.Unity?.call("I leveled up in the RPG game!");
           } else {
             setMessage(`You defeated the ${currentEnemy.name}! Gained ${currentEnemy.gold} gold and 20 XP.`);
           }

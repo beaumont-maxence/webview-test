@@ -13,35 +13,47 @@ const MAP_SIZE = 10;
 const INITIAL_PLAYER_POS = { x: 5, y: 5 };
 
 type Position = { x: number; y: number };
-type GameState = 'world' | 'combat';
+type GameState = 'world' | 'combat' | 'shop' | 'inn';
 
 interface Character {
   name: string;
   hp: number;
   maxHp: number;
   attack: number;
+  gold: number;
 }
 
 const RPGGame: React.FC = () => {
   const [playerPos, setPlayerPos] = useState<Position>(INITIAL_PLAYER_POS);
   const [gameState, setGameState] = useState<GameState>('world');
-  const [player, setPlayer] = useState<Character>({ name: 'Hero', hp: 100, maxHp: 100, attack: 20 });
-  const [enemy, setEnemy] = useState<Character>({ name: 'Goblin', hp: 50, maxHp: 50, attack: 15 });
+  const [player, setPlayer] = useState<Character>({ name: 'Hero', hp: 100, maxHp: 100, attack: 20, gold: 0 });
+  const [enemy, setEnemy] = useState<Character>({ name: 'Goblin', hp: 50, maxHp: 50, attack: 15, gold: 10 });
+  const [enemyPos, setEnemyPos] = useState<Position | null>(null);
   const [message, setMessage] = useState<string>('Welcome to the RPG world!');
 
-  // Generate a simple map with some enemies
+  // Generate a simple map with some enemies, shop, and inn
   const generateMap = useCallback(() => {
     const map: string[][] = [];
     for (let y = 0; y < MAP_SIZE; y++) {
       map[y] = [];
       for (let x = 0; x < MAP_SIZE; x++) {
-        if (Math.random() < 0.1) {
-          map[y][x] = 'enemy';
-        } else {
-          map[y][x] = 'grass';
-        }
+        map[y][x] = 'grass';
       }
     }
+    // Add shop at top-left
+    map[0][0] = 'shop';
+    // Add inn at bottom-right
+    map[MAP_SIZE - 1][MAP_SIZE - 1] = 'inn';
+    // Add some enemies
+    const enemyPositions = [
+      { x: 2, y: 2 },
+      { x: 7, y: 3 },
+      { x: 4, y: 7 },
+      { x: 8, y: 8 }
+    ];
+    enemyPositions.forEach(pos => {
+      map[pos.y][pos.x] = 'enemy';
+    });
     return map;
   }, []);
 
@@ -59,8 +71,15 @@ const RPGGame: React.FC = () => {
       const tile = map[newY][newX];
       if (tile === 'enemy') {
         setGameState('combat');
-        setEnemy({ name: 'Goblin', hp: 50, maxHp: 50, attack: 15 });
+        setEnemyPos({ x: newX, y: newY });
+        setEnemy({ name: 'Goblin', hp: 50, maxHp: 50, attack: 15, gold: 10 });
         setMessage('You encountered a Goblin! Combat begins!');
+      } else if (tile === 'shop') {
+        setGameState('shop');
+        setMessage('Welcome to the shop!');
+      } else if (tile === 'inn') {
+        setGameState('inn');
+        setMessage('Welcome to the inn!');
       } else {
         setMessage('You move through the world.');
       }
@@ -77,14 +96,27 @@ const RPGGame: React.FC = () => {
     setEnemy(currentEnemy => {
       const newHp = Math.max(0, currentEnemy.hp - damage);
       if (newHp === 0) {
-        setMessage(`You defeated the ${currentEnemy.name}!`);
+        setMessage(`You defeated the ${currentEnemy.name}! Gained ${currentEnemy.gold} gold.`);
+        setPlayer(currentPlayer => ({ ...currentPlayer, gold: currentPlayer.gold + currentEnemy.gold }));
         setGameState('world');
         // Remove enemy from map
         setMap(currentMap => {
           const newMap = [...currentMap];
-          newMap[playerPos.y][playerPos.x] = 'grass';
+          if (enemyPos) {
+            newMap[enemyPos.y][enemyPos.x] = 'grass';
+          }
           return newMap;
         });
+        // Respawn enemy after 5 seconds
+        setTimeout(() => {
+          setMap(currentMap => {
+            const newMap = [...currentMap];
+            if (enemyPos) {
+              newMap[enemyPos.y][enemyPos.x] = 'enemy';
+            }
+            return newMap;
+          });
+        }, 5000);
       } else {
         setMessage(`You attack for ${damage} damage!`);
         // Enemy turn
@@ -96,7 +128,7 @@ const RPGGame: React.FC = () => {
               setMessage('You were defeated! Game Over.');
               setGameState('world');
               // Reset player
-              setPlayer({ name: 'Hero', hp: 100, maxHp: 100, attack: 20 });
+              setPlayer({ name: 'Hero', hp: 100, maxHp: 100, attack: 20, gold: 0 });
               setPlayerPos(INITIAL_PLAYER_POS);
             } else {
               setMessage(`${currentEnemy.name} attacks for ${enemyDamage} damage!`);
@@ -121,7 +153,7 @@ const RPGGame: React.FC = () => {
         if (newHp === 0) {
           setMessage('You were defeated! Game Over.');
           setGameState('world');
-          setPlayer({ name: 'Hero', hp: 100, maxHp: 100, attack: 20 });
+          setPlayer({ name: 'Hero', hp: 100, maxHp: 100, attack: 20, gold: 0 });
           setPlayerPos(INITIAL_PLAYER_POS);
         } else {
           setMessage(`${enemy.name} attacks for ${enemyDamage} damage!`);
@@ -172,6 +204,7 @@ const RPGGame: React.FC = () => {
       <div className="flex flex-col items-center">
         <div className="mb-4 text-center">
           <p className="text-lg font-semibold">Player HP: {player.hp}/{player.maxHp}</p>
+          <p className="text-lg font-semibold">Gold: {player.gold}</p>
           {gameState === 'combat' && (
             <p className="text-lg font-semibold">Enemy HP: {enemy.hp}/{enemy.maxHp}</p>
           )}
@@ -195,6 +228,10 @@ const RPGGame: React.FC = () => {
                   cellClass += ' bg-blue-500';
                 } else if (tile === 'enemy') {
                   cellClass += ' bg-red-400';
+                } else if (tile === 'shop') {
+                  cellClass += ' bg-yellow-400';
+                } else if (tile === 'inn') {
+                  cellClass += ' bg-purple-400';
                 } else {
                   cellClass += ' bg-green-300';
                 }
@@ -227,6 +264,44 @@ const RPGGame: React.FC = () => {
               <Button onClick={defend} variant="outline">Defend</Button>
               <Button onClick={flee} variant="secondary">Flee</Button>
             </div>
+          </div>
+        )}
+
+        {gameState === 'shop' && (
+          <div className="flex flex-col items-center space-y-4">
+            <p className="text-xl font-bold">Shop</p>
+            <Button onClick={() => {
+              if (player.gold >= 10) {
+                setPlayer(current => ({ ...current, hp: Math.min(current.maxHp, current.hp + 50), gold: current.gold - 10 }));
+                setMessage('Bought potion! Healed 50 HP.');
+              } else {
+                setMessage('Not enough gold!');
+              }
+            }}>Buy Potion (10 gold) - Heal 50 HP</Button>
+            <Button onClick={() => {
+              if (player.gold >= 50) {
+                setPlayer(current => ({ ...current, attack: current.attack + 5, gold: current.gold - 50 }));
+                setMessage('Bought sword! Attack +5.');
+              } else {
+                setMessage('Not enough gold!');
+              }
+            }}>Buy Sword (50 gold) - +5 Attack</Button>
+            <Button onClick={() => setGameState('world')}>Leave Shop</Button>
+          </div>
+        )}
+
+        {gameState === 'inn' && (
+          <div className="flex flex-col items-center space-y-4">
+            <p className="text-xl font-bold">Inn</p>
+            <Button onClick={() => {
+              if (player.gold >= 20) {
+                setPlayer(current => ({ ...current, hp: current.maxHp, gold: current.gold - 20 }));
+                setMessage('Rested! Fully healed.');
+              } else {
+                setMessage('Not enough gold!');
+              }
+            }}>Rest (20 gold) - Full Heal</Button>
+            <Button onClick={() => setGameState('world')}>Leave Inn</Button>
           </div>
         )}
       </div>

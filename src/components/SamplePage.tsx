@@ -130,6 +130,14 @@ function SamplePage() {
                         </Button>
 
                         <Button
+                            onClick={() => callUnity('Fullscreen')}
+                            variant="default"
+                            disabled={isLoading === 'Fullscreen'}
+                        >
+                            {isLoading === 'Fullscreen' ? 'Loading...' : '🔄 Toggle Fullscreen'}
+                        </Button>
+
+                        <Button
                             onClick={() => setShowVideo(!showVideo)}
                             variant="default"
                         >
